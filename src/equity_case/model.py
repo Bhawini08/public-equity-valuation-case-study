@@ -14,7 +14,7 @@ class Scenario:
     d_and_a_pct_revenue:float
     capex_pct_revenue:float
     nwc_pct_revenue:float
-    net_debt_change_per_year:float
+    debt_change_per_year:float
     share_count_decline:float
 
 def load_inputs(hist_path="data/adobe_historicals.csv",bs_path="data/adobe_balance_sheet_2025.csv",assumptions_path="data/valuation_inputs.csv"):
@@ -29,7 +29,7 @@ def scenario_from_table(a:pd.DataFrame,name:str):
         [float(a.loc[f"revenue_growth_{y}",name]) for y in years],
         [float(a.loc[f"operating_margin_{y}",name]) for y in years],
         float(a.loc["d_and_a_pct_revenue",name]),float(a.loc["capex_pct_revenue",name]),
-        float(a.loc["nwc_pct_revenue",name]),float(a.loc["net_debt_change_per_year",name]),
+        float(a.loc["nwc_pct_revenue",name]),float(a.loc["debt_change_per_year",name]),
         float(a.loc["share_count_decline",name]))
 
 def build_forecast(hist:pd.DataFrame,bs:pd.Series,s:Scenario):
@@ -51,7 +51,7 @@ def build_forecast(hist:pd.DataFrame,bs:pd.Series,s:Scenario):
         net_income=pretax-taxes
         fcff=op_income*(1-s.tax_rate)+d_and_a-capex-delta_nwc
         cfo=net_income+d_and_a-delta_nwc
-        debt_change=debt*s.net_debt_change_per_year/100
+        debt_change=s.debt_change_per_year
         debt=max(0,debt+debt_change)
         shares=shares*(1-s.share_count_decline)
         ppe=ppe+capex-d_and_a
