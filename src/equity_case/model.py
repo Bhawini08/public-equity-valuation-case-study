@@ -65,7 +65,7 @@ def build_forecast(hist:pd.DataFrame,bs:pd.Series,s:Scenario):
         prev_rev=revenue; prev_nwc=nwc
     return pd.DataFrame(rows).set_index("year")
 
-def dcf_value(forecast:pd.DataFrame,bs:pd.Series,s:Scenario):
+def dcf_value(forecast:pd.DataFrame,bs:pd.Series,s:Scenario,current_diluted_shares:float|None=None):
     fcff=forecast.fcff.to_numpy(float); years=np.arange(1,len(fcff)+1)
     pv_explicit=float(np.sum(fcff/(1+s.wacc)**years))
     terminal=fcff[-1]*(1+s.terminal_growth)/(s.wacc-s.terminal_growth)
@@ -73,14 +73,19 @@ def dcf_value(forecast:pd.DataFrame,bs:pd.Series,s:Scenario):
     enterprise=pv_explicit+pv_terminal
     net_debt=float(bs["debt"]-bs["cash"]-bs["short_term_investments"])
     equity=enterprise-net_debt
-    shares=float(forecast.shares.iloc[-1])
+    # DCF values the equity as of the valuation date, so divide by current diluted
+    # shares rather than a forecast 2030 share count. Using future buyback-reduced
+    # shares without subtracting the cash cost of those repurchases would overstate
+    # current per-share value.
+    shares=float(current_diluted_shares) if current_diluted_shares is not None else float(bs["shares_outstanding"])
     return {"enterprise_value":enterprise,"net_debt":net_debt,"equity_value":equity,
-            "value_per_share":equity/shares,"pv_explicit":pv_explicit,"pv_terminal":pv_terminal}
+            "value_per_share":equity/shares,"shares_for_valuation":shares,
+            "pv_explicit":pv_explicit,"pv_terminal":pv_terminal}
 
-def valuation_sensitivity(forecast,bs,wacc_grid=None,g_grid=None):
+def valuation_sensitivity(forecast,bs,wacc_grid=None,g_grid=None,current_diluted_shares:float|None=None):
     wacc_grid=np.arange(.07,.105,.005) if wacc_grid is None else np.asarray(wacc_grid)
     g_grid=np.arange(.02,.045,.005) if g_grid is None else np.asarray(g_grid)
-    fcff=forecast.fcff.to_numpy(float); years=np.arange(1,len(fcff)+1); shares=float(forecast.shares.iloc[-1])
+    fcff=forecast.fcff.to_numpy(float); years=np.arange(1,len(fcff)+1); shares=float(current_diluted_shares) if current_diluted_shares is not None else float(bs["shares_outstanding"])
     net_debt=float(bs["debt"]-bs["cash"]-bs["short_term_investments"])
     rows=[]
     for w in wacc_grid:
