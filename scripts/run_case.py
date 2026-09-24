@@ -9,8 +9,9 @@ rows=[]
 for name in ["bear","base","bull"]:
     s=scenario_from_table(a,name); f=build_forecast(h,b,s); f.to_csv(out/(name+"_forecast.csv"))
     inc,bs,cf=forecast_three_statements(f,b); inc.to_csv(out/(name+"_income_statement.csv")); bs.to_csv(out/(name+"_balance_sheet.csv")); cf.to_csv(out/(name+"_cash_flow.csv"))
-    d=dcf_value(f,b,s); rows.append({"scenario":name,**d})
-    if name=="base": valuation_sensitivity(f,b).to_csv(out/"dcf_sensitivity.csv",index=False)
+    current_diluted=float(h.loc[2025,"diluted_shares"])
+    d=dcf_value(f,b,s,current_diluted_shares=current_diluted); rows.append({"scenario":name,**d})
+    if name=="base": valuation_sensitivity(f,b,current_diluted_shares=current_diluted).to_csv(out/"dcf_sensitivity.csv",index=False)
 summary=pd.DataFrame(rows); summary.to_csv(out/"valuation_summary.csv",index=False)
 metrics={"roic_proxy_2025":roic_proxy(h,b),"base_value_per_share":float(summary.loc[summary.scenario=="base","value_per_share"].iloc[0])}
 (out/"metrics.json").write_text(json.dumps(metrics,indent=2))
