@@ -1,0 +1,6 @@
+company,ticker,ev_ebitda,pe,as_of,source_note
+Autodesk,ADSK,,,,Refresh during live validation
+Salesforce,CRM,,,,Refresh during live validation
+Intuit,INTU,,,,Refresh during live validation
+ServiceNow,NOW,,,,Refresh during live validation
+Adobe,ADBE,,,,Target company
